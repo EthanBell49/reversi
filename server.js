@@ -110,7 +110,7 @@ socket.on('send_message',function(payLoad){
     if(('undefined' === typeof payLoad) || !payLoad){
       var error_message = 'send_message had no payLoad, command aborted';
       log(error_message);
-      socket.emit('send_message_reponse',    {
+      socket.emit('send_message_response',    {
                                             result: 'fail',
                                             message: error_message
                                           });
@@ -121,7 +121,7 @@ socket.on('send_message',function(payLoad){
   if(('undefined' === typeof room) || !room){
     var error_message = 'send_message didn\'t specify a room, command aborted';
     log(error_message);
-    socket.emit('send_message_reponse',    {
+    socket.emit('send_message_response',    {
                                           result: 'fail',
                                           message: error_message
                                         });
@@ -131,7 +131,7 @@ socket.on('send_message',function(payLoad){
   if(('undefined' === typeof username) || !username){
     var error_message = 'send_message didn\'t specify a username, command aborted';
     log(error_message);
-    socket.emit('send_message_reponse',    {
+    socket.emit('send_message_response',    {
                                           result: 'fail',
                                           message: error_message
                                         });
@@ -141,7 +141,7 @@ socket.on('send_message',function(payLoad){
   if(('undefined' === typeof message) || !message){
     var error_message = 'send_message didn\'t specify a message, command aborted';
     log(error_message);
-    socket.emit('send_message_reponse',    {
+    socket.emit('send_message_response',    {
                                           result: 'fail',
                                           message: error_message
                                         });
@@ -153,7 +153,7 @@ socket.on('send_message',function(payLoad){
                       username: username,
                       message: message
                     };
-  io.sockets.in(room).emit('send_message_reponse',success_data);
+  io.sockets.in(room).emit('send_message_response',success_data);
   log('Message send to room '+ room + ' by '+ username);
   });
 });
