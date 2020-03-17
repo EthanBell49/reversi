@@ -26,14 +26,30 @@ socket.on('log',function(array){
   console.log.apply(console,array);
 });
 
-socket.on('join_room_reponse',function(payLoad) {
+socket.on('join_room_response',function(payLoad) {
   if(payLoad.result == 'fail' ){
     alert(payLoad.message);
     return;
   }
-  $('#message').append('<p>New user joined the room: ' + payLoad.username,'</p>');
+  $('#messages').append('<p>New user joined the room: ' + payLoad.username,'</p>');
 });
 
+socket.on('join_room_response',function(payLoad) {
+  if(payLoad.result == 'fail' ){
+    alert(payLoad.message);
+    return;
+  }
+  $('#messages').append('<p><b>' +payLoad.username+ ' says:</b> ' +payLoad.message+ '</p>');
+});
+
+function send_message(){
+  var payLoad ={};
+  payLoad.room = chat_room;
+  payLoad.username = username;
+  payLoad.message = $('#send_message_holder').val();
+  console.log('*** Client Log Message: \'send message\' payLoad: '+JSON.stringify(payLoad));
+  socket.emit('send_message',payLoad);
+}
 
 $(function(){
   var payLoad = {};

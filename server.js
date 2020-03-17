@@ -50,7 +50,7 @@ io.sockets.on('connection', function (socket){
     log('A web site disconnected from the server');
   });
 
-  /* join_room command */
+/* join_room command                                */
   socket.on('join_room',function(payLoad){
     log('server received a command','join_room',payLoad);
     if(('undefined' === typeof payLoad) || !payLoad){
@@ -101,7 +101,59 @@ io.sockets.on('connection', function (socket){
                       username: username,
                       membership: (numClients + 1)
                     };
-io.sockets.in(room).emit('join_room_reponse', success_data);
-log('Room' + room + 'was just joind by ' + username);
+  io.sockets.in(room).emit('join_room_reponse', success_data);
+  log('Room' + room + 'was just joind by ' + username);
+});
+/*       send_message command                       */
+socket.on('send_message',function(payLoad){
+    log('server received a command','send_message',payLoad);
+    if(('undefined' === typeof payLoad) || !payLoad){
+      var error_message = 'send_message had no payLoad, command aborted';
+      log(error_message);
+      socket.emit('send_message_reponse',    {
+                                            result: 'fail',
+                                            message: error_message
+                                          });
+      return;
+    }
+
+  var room = payLoad.room;
+  if(('undefined' === typeof room) || !room){
+    var error_message = 'send_message didn\'t specify a room, command aborted';
+    log(error_message);
+    socket.emit('send_message_reponse',    {
+                                          result: 'fail',
+                                          message: error_message
+                                        });
+    return;
+  }
+  var username = payLoad.username;
+  if(('undefined' === typeof username) || !username){
+    var error_message = 'send_message didn\'t specify a username, command aborted';
+    log(error_message);
+    socket.emit('send_message_reponse',    {
+                                          result: 'fail',
+                                          message: error_message
+                                        });
+    return;
+  }
+  var message = payLoad.message;
+  if(('undefined' === typeof message) || !message){
+    var error_message = 'send_message didn\'t specify a message, command aborted';
+    log(error_message);
+    socket.emit('send_message_reponse',    {
+                                          result: 'fail',
+                                          message: error_message
+                                        });
+    return;
+  }
+  var success_data = {
+                      result: 'success',
+                      room: room,
+                      username: username,
+                      message: message
+                    };
+  io.sockets.in(room).emit('send_message_reponse',success_data);
+  log('Message send to room '+ room + ' by '+ username);
   });
 });
