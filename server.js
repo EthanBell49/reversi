@@ -45,8 +45,63 @@ io.sockets.on('connection', function (socket){
     socket.broadcast.emit('log',array);
   }
   log('A web site connected to the server');
-  
+
   socket.on('disconnected',function(socket){
     log('A web site disconnected from the server');
+  });
+
+  /* join_room command */
+  socket.on('join_room',function(payLoad){
+    log('server received a command','join_room',payLoad);
+    if(('undefined' === typeof payLoad) || !payLoad){
+      var error_message = 'join_room had no payLoad, command aborted';
+      log(error_message);
+      socket.emit('join_room_reponse',    {
+                                            result: 'fail',
+                                            message: error_message
+                                          });
+      return;
+    }
+
+  var room = payLoad.room;
+  if(('undefined' === typeof room) || !room){
+    var error_message = 'join_room didn\'t specify a room, command aborted';
+    log(error_message);
+    socket.emit('join_room_reponse',    {
+                                          result: 'fail',
+                                          message: error_message
+                                        });
+    return;
+  }
+  var username = payLoad.username;
+  if(('undefined' === typeof username) || !username){
+    var error_message = 'join_room didn\'t specify a username, command aborted';
+    log(error_message);
+    socket.emit('join_room_reponse',    {
+                                          result: 'fail',
+                                          message: error_message
+                                        });
+    return;
+  }
+  socket.join(room);
+  var roomObject = io.sockets.adapter.rooms[room];
+  if(('undefined' === typeof roomObject) || !roomObject){
+    var error_message = 'join_room could\'t create a room (internal error), command aborted';
+    log(error_message);
+    socket.emit('join_room_reponse',    {
+                                          result: 'fail',
+                                          message: error_message
+                                        });
+    return;
+  }
+  var numClients = roomObject.length;
+  var success_data = {
+                      result: 'success',
+                      room: room,
+                      username: username,
+                      membership: (numClients + 1)
+                    };
+io.sockets.in(room).emit('join_room_reponse', success_data);
+log('Room' + room + 'was just joind by ' + username);
   });
 });

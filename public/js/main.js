@@ -17,11 +17,27 @@ if ('undefined' == typeof username || !username) {
   username = 'Anonymous_'+Math.random();
 }
 
-$('#messages').append('<h4>'+username+'</h4>');
+var chat_room = 'One_Room';
 
 /* connect to the socket server*/
 var socket = io.connect();
 
 socket.on('log',function(array){
   console.log.apply(console,array);
-})
+});
+
+socket.on('join_room_reponse',function(payLoad) {
+  if(payLoad.result == 'fail' ){
+    alert(payLoad.message);
+    return;
+  }
+  $('#message').append('<p>New user joined the room: ' + payLoad.username,'</p>');
+});
+
+
+$(function(){
+  var payLoad = {};
+  payLoad.username = username;
+  console.log('*** Client Log Message: \'join_room\' payLoad: '+JSON.stringify(payLoad));
+  socket.emit('join_room', payLoad);
+});
