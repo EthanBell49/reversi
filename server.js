@@ -16,7 +16,7 @@ if(typeof port == 'undefined' || !port){
    port = 8080;
 }
 
-/* set up a static web-server that will delicer file from the dilesystem */
+/* set up a static web-server that will deliver file from the filesystem */
 var file = new static.Server(directory);
 
 /* construct an http server that gets file fom thefile server */
@@ -33,8 +33,14 @@ var app = http.createServer(
 console.log('The server is running');
 /***************************************************************/
 /*           set up the web socket server                   */
+
+/* a registry of socket_ids and player information*/
+var players = [];
+
 var io = require('socket.io').listen(app);
+
 io.sockets.on('connection', function (socket){
+  log('Client connection by '+socket.id);
   function log(){
     var array = ['*** Server Log Message: '];
     for(var i = 0; i < arguments.length; i++){
@@ -44,17 +50,14 @@ io.sockets.on('connection', function (socket){
     socket.emit('log',array);
     socket.broadcast.emit('log',array);
   }
-  log('A web site connected to the server');
-
-  socket.on('disconnected',function(socket){
-    log('A web site disconnected from the server');
-  });
 
 /* join_room command                                */
-  socket.on('join_room',function(payLoad){
-    log('server received a command','join_room',payLoad);
-    if(('undefined' === typeof payLoad) || !payLoad){
-      var error_message = 'join_room had no payLoad, command aborted';
+  socket.on('join_room',function(payload){
+    log('\'join_room\' command'+JSON.stringify(payload));
+
+    /* check that the client sent a payload*/
+    if(('undefined' === typeof payload) || !payload){
+      var error_message = 'join_room had no payload, command aborted';
       log(error_message);
       socket.emit('join_room_reponse',    {
                                             result: 'fail',
@@ -63,7 +66,8 @@ io.sockets.on('connection', function (socket){
       return;
     }
 
-  var room = payLoad.room;
+  /* check that the payload has a room to join*/
+  var room = payload.room;
   if(('undefined' === typeof room) || !room){
     var error_message = 'join_room didn\'t specify a room, command aborted';
     log(error_message);
@@ -73,7 +77,9 @@ io.sockets.on('connection', function (socket){
                                         });
     return;
   }
-  var username = payLoad.username;
+
+  /* check that the username has been provided*/
+  var username = payload.username;
   if(('undefined' === typeof username) || !username){
     var error_message = 'join_room didn\'t specify a username, command aborted';
     log(error_message);
@@ -83,32 +89,63 @@ io.sockets.on('connection', function (socket){
                                         });
     return;
   }
+  /* store information about the new player */
+  players[socket.id] = {};
+  players[socket.id].username = username;
+  players[socket.id].room = room;
+
+  /* Actually have the user join the room*/
   socket.join(room);
+
+  /* Get the toom object*/
   var roomObject = io.sockets.adapter.rooms[room];
-  if(('undefined' === typeof roomObject) || !roomObject){
-    var error_message = 'join_room could\'t create a room (internal error), command aborted';
-    log(error_message);
-    socket.emit('join_room_reponse',    {
-                                          result: 'fail',
-                                          message: error_message
-                                        });
-    return;
-  }
+
+  /* Tell everyone that is already in the room that someone just joined*/
   var numClients = roomObject.length;
   var success_data = {
                       result: 'success',
                       room: room,
                       username: username,
-                      membership: (numClients + 1)
+                      socket_id: socket.id,
+                      membership: numClients
                     };
   io.sockets.in(room).emit('join_room_reponse', success_data);
-  log('Room' + room + 'was just joind by ' + username);
+
+  for(var socket_in_room in roomObject.sockets){
+    var success_data = {
+                        result: 'success',
+                        room: room,
+                        username: players[socket_in_room].username,
+                        socket_id: socket_in_room,
+                        membership: numClients
+                      };
+    socket.emit('join_room_reponse',success_data);
+  }
+
+  log('join_room success');
 });
+
+socket.on('disconnected',function(socket){
+  log('Client disconnected '+JSON.stringify(players[socket.id]));
+
+  if('undefined' !== typeof players[socket.id] && players[socket.id]) {
+      var username = players[socket.id].username;
+      var room = players[socket.id].room;
+      var payload = {
+                      username: username,
+                      socket_id: socket.id
+                    };
+      delete players[socket.id];
+      io.in(room).emit('player_disconnected', payload);
+  }
+
+});
+
 /*       send_message command                       */
-socket.on('send_message',function(payLoad){
-    log('server received a command','send_message',payLoad);
-    if(('undefined' === typeof payLoad) || !payLoad){
-      var error_message = 'send_message had no payLoad, command aborted';
+socket.on('send_message',function(payload){
+    log('server received a command','send_message',payload);
+    if(('undefined' === typeof payload) || !payload){
+      var error_message = 'send_message had no payload, command aborted';
       log(error_message);
       socket.emit('send_message_response',    {
                                             result: 'fail',
@@ -117,7 +154,7 @@ socket.on('send_message',function(payLoad){
       return;
     }
 
-  var room = payLoad.room;
+  var room = payload.room;
   if(('undefined' === typeof room) || !room){
     var error_message = 'send_message didn\'t specify a room, command aborted';
     log(error_message);
@@ -127,7 +164,7 @@ socket.on('send_message',function(payLoad){
                                         });
     return;
   }
-  var username = payLoad.username;
+  var username = payload.username;
   if(('undefined' === typeof username) || !username){
     var error_message = 'send_message didn\'t specify a username, command aborted';
     log(error_message);
@@ -137,7 +174,7 @@ socket.on('send_message',function(payLoad){
                                         });
     return;
   }
-  var message = payLoad.message;
+  var message = payload.message;
   if(('undefined' === typeof message) || !message){
     var error_message = 'send_message didn\'t specify a message, command aborted';
     log(error_message);
