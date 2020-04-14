@@ -195,7 +195,7 @@ socket.on('game_start_response',function(payload) {
     return;
   }
   var newNode = makeEngagedButton(payload.socket_id);
-  $('.socket_'+payload.socket_id+'_button').html(newNode);  
+  $('.socket_'+payload.socket_id+'_button').html(newNode);
   var username = getURLParameters('username');
   /* jump to new game*/
 
@@ -264,4 +264,77 @@ $(function(){
 
   console.log('*** Client Log Message: \'join_room\' payload: '+JSON.stringify(payload));
   socket.emit('join_room', payload);
+});
+
+var old_board = [
+                  ['?','?','?','?','?','?','?','?'],
+                  ['?','?','?','?','?','?','?','?'],
+                  ['?','?','?','?','?','?','?','?'],
+                  ['?','?','?','?','?','?','?','?'],
+                  ['?','?','?','?','?','?','?','?'],
+                  ['?','?','?','?','?','?','?','?'],
+                  ['?','?','?','?','?','?','?','?'],
+                  ['?','?','?','?','?','?','?','?']
+                ];
+
+socket.on('game_update', function(payload){
+
+    console.log('*** Client Log Message: \'game_update\'\n\tpayload: '+JSON.stringify(payload));
+    /* check for a good bord update*/
+    if(payload.result == 'fail'){
+        console.log(payload.message);
+        window.location.href = 'lobby.html?username='+username;
+        return;
+    }
+    /*check for a good board in the payload*/
+    var board = payload.game.board;
+    if('undefined' == typeof board || !board){
+      console.log('internal error: received a malformed board update from the server');
+    }
+    /*update color */
+
+    /*animate canges to the board */
+
+    var row,column;
+    for(row = 0; row < 8; row++){
+      for(column = 0; column < 8; column++){
+        /* if a board space has changed */
+        if(old_board[row][column] != board [row][column]){
+          if(old_board[row][column] == '?' && board [row][column] == ' '){
+            $('#'+row+'_'+column).html('<img src="assets/images/empty.gif" alt="empty square"/>');
+          }
+          /*empty_to_black/white*/
+          else if(old_board[row][column] == '?' && board [row][column] == 'w'){
+            $('#'+row+'_'+column).html('<img src="assets/images/empty_to_white.gif" alt="white square"/>');
+          }
+          else if(old_board[row][column] == '?' && board [row][column] == 'b'){
+            $('#'+row+'_'+column).html('<img src="assets/images/empty_to_black.gif" alt="black square"/>');
+          }
+          else if(old_board[row][column] == ' ' && board [row][column] == 'w'){
+            $('#'+row+'_'+column).html('<img src="assets/images/empty_to_white.gif" alt="white square"/>');
+          }
+          else if(old_board[row][column] == ' ' && board [row][column] == 'b'){
+            $('#'+row+'_'+column).html('<img src="assets/images/empty_to_black.gif" alt="black square"/>');
+          }
+          /*black/white_to_empty*/
+          else if(old_board[row][column] == 'w' && board [row][column] == ' '){
+            $('#'+row+'_'+column).html('<img src="assets/images/white_to_empty.gif" alt="empty square"/>');
+          }
+          else if(old_board[row][column] == 'b' && board [row][column] == ' '){
+            $('#'+row+'_'+column).html('<img src="assets/images/black_to_empty.gif" alt="empty square"/>');
+          }
+          /* black_to_white/white_to_black */
+          else if(old_board[row][column] == 'w' && board [row][column] == 'b'){
+            $('#'+row+'_'+column).html('<img src="assets/images/white_to_black.gif" alt="black square"/>');
+          }
+          else if(old_board[row][column] == 'b' && board [row][column] == 'w'){
+            $('#'+row+'_'+column).html('<img src="assets/images/black_to_white.gif" alt="white square"/>');
+          }
+          else {
+            $('#'+row+'_'+column).html('<img src="assets/images/error.gif" alt="error"/>');
+          }
+        }
+      }
+    }
+    old_board = board;
 });
