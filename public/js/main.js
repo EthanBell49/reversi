@@ -48,14 +48,14 @@ var dom_elements = $('.socket_'+payload.socket_id);
 /* if we don't alredy have an entry for this person */
 if(dom_elements.length == 0){
 
-    var nodeA = $('<div></div>');
-    nodeA.addClass('.socket_'+payload.socket_id);
+    var nodeA = $('<div A></div>');
+    nodeA.addClass('socket_'+payload.socket_id);
 
-    var nodeB = $('<div></div>');
-    nodeB.addClass('.socket_'+payload.socket_id);
+    var nodeB = $('<div B></div>');
+    nodeB.addClass('socket_'+payload.socket_id);
 
-    var nodeC = $('<div></div>');
-    nodeC.addClass('.socket_'+payload.socket_id);
+    var nodeC = $('<div C></div>');
+    nodeC.addClass('socket_'+payload.socket_id+'_button');
 
     nodeA.addClass('w-100');
 
@@ -77,7 +77,7 @@ if(dom_elements.length == 0){
 else{
     uninvite(payload.socket_id);
     var buttonC = makeInviteButton(payload.socket_id);
-    $('.socket_'+payload.socket_id+'_button').replaceWith(buttonC);
+    $('.socket_'+payload.socket_id+'_button').html(buttonC);
     dom_elements.slideDown(1000);
 }
 
@@ -135,7 +135,7 @@ socket.on('invite_response',function(payload) {
     return;
   }
   var newNode = makeInvitedButton(payload.socket_id);
-  $('.socket_'+payload.socket_id+'_button').replaceWith(newNode);
+  $('.socket_'+payload.socket_id+'_button').html(newNode);
 });
 
 /* handle a notification that we have been invited*/
@@ -145,7 +145,7 @@ socket.on('invited',function(payload) {
     return;
   }
   var newNode = makePlayButton(payload.socket_id);
-  $('.socket_'+payload.socket_id+'_button').replaceWith(newNode);
+  $('.socket_'+payload.socket_id+'_button').html(newNode);
 });
 
 
@@ -165,7 +165,7 @@ socket.on('uninvite_response',function(payload) {
     return;
   }
   var newNode = makeInviteButton(payload.socket_id);
-  $('.socket_'+payload.socket_id+'_button').replaceWith(newNode);
+  $('.socket_'+payload.socket_id+'_button').html(newNode);
 });
 
 /* handle a notification that we have been uninvited*/
@@ -175,7 +175,7 @@ socket.on('uninvited',function(payload) {
     return;
   }
   var newNode = makeInviteButton(payload.socket_id);
-  $('.socket_'+payload.socket_id+'_button').replaceWith(newNode);
+  $('.socket_'+payload.socket_id+'_button').html(newNode);
 });
 
 
@@ -195,10 +195,11 @@ socket.on('game_start_response',function(payload) {
     return;
   }
   var newNode = makeEngagedButton(payload.socket_id);
-  $('.socket_'+payload.socket_id+'_button').replaceWith(newNode);
-
+  $('.socket_'+payload.socket_id+'_button').html(newNode);  
+  var username = getURLParameters('username');
   /* jump to new game*/
-  Window.location.href ='game.html?username='+username+'&game_id='+payload.game_id;
+
+  window.location.href ='game.html?username='+username+'&game_id='+payload.game_id;
 });
 
 
