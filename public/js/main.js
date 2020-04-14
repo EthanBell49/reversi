@@ -82,10 +82,10 @@ else{
 }
 
 /* Manage the message that a new player has joined */
-  var newHTML = '<p>'+payload.username+' just entered the labby</p>';
+  var newHTML = '<p>'+payload.username+' just entered the room</p>';
   var newNode = $(newHTML);
   newNode.hide();
-  $('#messages').append(newNode);
+  $('#messages').prepend(newNode);
   newNode.slideDown(1000);
 });
 
@@ -112,10 +112,10 @@ if(dom_elements.length != 0){
 }
 
 /* Manage the message that a new player has left */
-  var newHTML = '<p>' +payload.username+' has left the lobby</p>';
+  var newHTML = '<p>' +payload.username+' has left the room</p>';
   var newNode = $(newHTML);
   newNode.hide();
-  $('#messages').append(newNode);
+  $('#messages').prepend(newNode);
   newNode.slideDown(1000);
 });
 
@@ -209,6 +209,7 @@ function send_message(){
   payload.message = $('#send_message_holder').val();
   console.log('*** Client Log Message: \'send message\' payload: '+JSON.stringify(payload));
   socket.emit('send_message', payload);
+  $('#send_message_holder').val('');
 }
 
 socket.on('send_message_response',function(payload) {
@@ -219,7 +220,7 @@ socket.on('send_message_response',function(payload) {
     var newHTML = '<p><b>'+payload.username+' says:</b> '+payload.message+'</p>';
     var newNode = $(newHTML);
     newNode.hide();
-  $('#messages').append(newNode);
+  $('#messages').prepend(newNode);
   newNode.slideDown(1000);
 });
 
@@ -276,6 +277,7 @@ var old_board = [
                   ['?','?','?','?','?','?','?','?'],
                   ['?','?','?','?','?','?','?','?']
                 ];
+var my_color = ' ';
 
 socket.on('game_update', function(payload){
 
@@ -292,6 +294,20 @@ socket.on('game_update', function(payload){
       console.log('internal error: received a malformed board update from the server');
     }
     /*update color */
+    if(socket.id == payload.game.player_white.socket){
+      my_color = 'white';
+    }
+    else if(socket.id == payload.game.player_black.socket){
+      my_color = 'black';
+    }
+    else {
+      /* somthing weird is going on, like three people playing at once*/
+      /* send client back to the lobby*/
+      window.location.href = 'lobby.html/?username='+username;
+      return;
+    }
+
+    $('#my_color').html('<h3 id="my_color"> I am '+my_color+'</h3>');
 
     /*animate canges to the board */
 
@@ -333,8 +349,38 @@ socket.on('game_update', function(payload){
           else {
             $('#'+row+'_'+column).html('<img src="assets/images/error.gif" alt="error"/>');
           }
+
+          /* set up interactity */
+          $('#'+row+'_'+column).off('click');
+          if(board[row][column] == ' '){
+            $('#'+row+'_'+column).addClass('hovered_over');
+            $('#'+row+'_'+column).click(function(r,c){
+                  return function(){
+                    var payload = {};
+                    payload.row = r;
+                    payload.column = c;
+                    payload.color = my_color;
+                    console.log('*** Client Log Message: \'play_token\' payload: '+JSON.stringify(payload));
+                    socket.emit('play_token',payload);
+                  };
+            }(row,column));
+          }
+            else{
+              $('#'+row+'_'+column).removeClass('hovered_over');
+            }
         }
       }
     }
     old_board = board;
+});
+
+socket.on('play_token_response', function(payload){
+
+    console.log('*** Client Log Message: \'play_token_response\'\n\tpayload: '+JSON.stringify(payload));
+    /* check for a good play_token_response */
+    if(payload.result == 'fail'){
+        console.log(payload.message);
+        alert(payload.message);
+        return;
+    }
 });
