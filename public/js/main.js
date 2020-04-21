@@ -311,6 +311,7 @@ socket.on('game_update', function(payload){
     }
 
     $('#my_color').html('<h3 id="my_color"> I am '+my_color+'</h3>');
+    $('#my_color').append('<h4>It is '+payload.game.whose_turn+'\'s turn</h4>');
 
     /*animate canges to the board */
 
@@ -361,27 +362,28 @@ socket.on('game_update', function(payload){
           else {
             $('#'+row+'_'+column).html('<img src="assets/images/error.gif" alt="error"/>');
           }
-
-          /* set up interactity */
-          $('#'+row+'_'+column).off('click');
-          if(board[row][column] == ' '){
-            $('#'+row+'_'+column).addClass('hovered_over');
-            $('#'+row+'_'+column).click(function(r,c){
-                  return function(){
-                    var payload = {};
-                    payload.row = r;
-                    payload.column = c;
-                    payload.color = my_color;
-                    console.log('*** Client Log Message: \'play_token\' payload: '+JSON.stringify(payload));
-                    socket.emit('play_token',payload);
-                  };
-            }(row,column));
-          }
-            else{
-              $('#'+row+'_'+column).removeClass('hovered_over');
-            }
         }
-      }
+        /* set up interactity */
+        $('#'+row+'_'+column).off('click');
+        $('#'+row+'_'+column).removeClass('hovered_over');
+
+        if(payload.game.whose_turn === my_color){
+            if(payload.game.legal_moves[row][column] === my_color.substr(0,1)){
+
+                $('#'+row+'_'+column).addClass('hovered_over');
+                $('#'+row+'_'+column).click(function(r,c){
+                      return function(){
+                        var payload = {};
+                        payload.row = r;
+                        payload.column = c;
+                        payload.color = my_color;
+                        console.log('*** Client Log Message: \'play_token\' payload: '+JSON.stringify(payload));
+                        socket.emit('play_token',payload);
+                      };
+                }(row,column));
+            }
+         }
+       }
     }
     $('#blacksum').html(blacksum);
     $('#whitesum').html(whitesum);
